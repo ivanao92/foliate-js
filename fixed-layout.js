@@ -838,7 +838,8 @@ export class FixedLayout extends HTMLElement {
             const containerWidth = container.clientWidth
             const containerHeight = container.clientHeight
             const { scrollLeft, scrollTop } = computePaginatedScroll({
-                elementWidth: element.clientWidth,
+                // the whole spread, not this page, so a two-page spread centres
+                elementWidth: Math.max(element.clientWidth, container.scrollWidth),
                 containerWidth,
                 containerHeight,
                 scrollHeight: container.scrollHeight,
@@ -901,7 +902,10 @@ export class FixedLayout extends HTMLElement {
                 const maxTop = Math.max(0, this.scrollHeight - this.clientHeight)
                 const maxLeft = Math.max(0, this.scrollWidth - this.clientWidth)
                 this.scrollTop = clamp(this.scrollTop + (b.top - this.#pinchAnchor.top), 0, maxTop)
-                this.scrollLeft = clamp(this.scrollLeft + (b.left - this.#pinchAnchor.left), 0, maxLeft)
+                // Horizontally the zoomed page lands centred unless the pan lock holds it.
+                this.scrollLeft = this.hasAttribute('lock-pan-x')
+                    ? clamp(this.scrollLeft + (b.left - this.#pinchAnchor.left), 0, maxLeft)
+                    : maxLeft / 2
             }
             this.#pinchAnchor = null
         }
