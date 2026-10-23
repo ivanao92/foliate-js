@@ -180,8 +180,11 @@ export const computeScrollPinchTransform = ({
 // within the page. A zoom passes `centerFraction`, the point at the middle of
 // the viewport as a fraction of the content height before the zoom, and keeps
 // that point in the middle, so zooming a fitted page opens on its centre.
+/** @param {{ elementWidth: number, containerWidth: number, containerHeight?: number,
+ *   scrollHeight?: number, scrollTop: number, scrollLeft: number, pageTurn: boolean,
+ *   lockPanX: boolean, centerFraction?: number | null }} args */
 export const computePaginatedScroll = ({
-    elementWidth, containerWidth, containerHeight, scrollHeight, scrollTop, scrollLeft,
+    elementWidth, containerWidth, containerHeight = 0, scrollHeight = 0, scrollTop, scrollLeft,
     pageTurn, lockPanX, centerFraction = null,
 }) => ({
     scrollLeft: lockPanX ? scrollLeft : (elementWidth - containerWidth) / 2,
