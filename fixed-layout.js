@@ -176,13 +176,18 @@ export const computeScrollPinchTransform = ({
 // reset to the top only on a page turn: a tall fit-width page overflows the
 // host vertically, and without the reset the freshly-shown page inherits the
 // previous page's offset and opens scrolled to the bottom (#4683). Plain
-// re-renders (resize, zoom, theme) keep the reader's current vertical position
-// within the page.
+// re-renders (resize, theme) keep the reader's current vertical position
+// within the page. A zoom passes `centerFraction`, the point at the middle of
+// the viewport as a fraction of the content height before the zoom, and keeps
+// that point in the middle, so zooming a fitted page opens on its centre.
 export const computePaginatedScroll = ({
-    elementWidth, containerWidth, scrollTop, scrollLeft, pageTurn, lockPanX,
+    elementWidth, containerWidth, containerHeight, scrollHeight, scrollTop, scrollLeft,
+    pageTurn, lockPanX, centerFraction = null,
 }) => ({
     scrollLeft: lockPanX ? scrollLeft : (elementWidth - containerWidth) / 2,
-    scrollTop: pageTurn ? 0 : scrollTop,
+    scrollTop: pageTurn ? 0
+        : centerFraction != null ? Math.max(0, centerFraction * scrollHeight - containerHeight / 2)
+        : scrollTop,
 })
 
 // Translate a vertical wheel tick into a horizontal scroll delta for
@@ -308,6 +313,7 @@ export class FixedLayout extends HTMLElement {
     #scrollLocked = false
     // Horizontal offset handed over by #showSpread for the next #render().
     #pannedX = null
+    #zoomCenter = null
     // Horizontal offset of the vertical scroll strip while the pan lock holds
     // it (see #syncScrollPanLock); null while the host scrolls on x itself.
     #lockedPanX = null
@@ -542,6 +548,8 @@ export class FixedLayout extends HTMLElement {
                 break
             case 'scale-factor':
                 this.#scaleFactor = parseFloat(value) / 100
+                if (this.scrollHeight)
+                    this.#zoomCenter = (this.scrollTop + this.clientHeight / 2) / this.scrollHeight
                 this.#render()
                 break
             case 'spread':
@@ -719,6 +727,8 @@ export class FixedLayout extends HTMLElement {
         // clamped the live value to 0 (#5976).
         const pannedX = this.#pannedX ?? this.scrollLeft
         this.#pannedX = null
+        const zoomCenter = this.#zoomCenter
+        this.#zoomCenter = null
         const left = this.#left ?? {}
         const right = this.#center ?? this.#right ?? {}
         const target = side === 'left' ? left : right
@@ -827,10 +837,13 @@ export class FixedLayout extends HTMLElement {
             const { scrollLeft, scrollTop } = computePaginatedScroll({
                 elementWidth: element.clientWidth,
                 containerWidth,
+                containerHeight,
+                scrollHeight: container.scrollHeight,
                 scrollTop: container.scrollTop,
                 scrollLeft: pannedX,
                 pageTurn,
                 lockPanX: this.hasAttribute('lock-pan-x'),
+                centerFraction: zoomCenter,
             })
             container.scrollLeft = scrollLeft
             container.scrollTop = scrollTop
