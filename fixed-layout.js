@@ -902,10 +902,7 @@ export class FixedLayout extends HTMLElement {
                 const maxTop = Math.max(0, this.scrollHeight - this.clientHeight)
                 const maxLeft = Math.max(0, this.scrollWidth - this.clientWidth)
                 this.scrollTop = clamp(this.scrollTop + (b.top - this.#pinchAnchor.top), 0, maxTop)
-                // Horizontally the zoomed page lands centred unless the pan lock holds it.
-                this.scrollLeft = this.hasAttribute('lock-pan-x')
-                    ? clamp(this.scrollLeft + (b.left - this.#pinchAnchor.left), 0, maxLeft)
-                    : maxLeft / 2
+                this.scrollLeft = clamp(this.scrollLeft + (b.left - this.#pinchAnchor.left), 0, maxLeft)
             }
             this.#pinchAnchor = null
         }
